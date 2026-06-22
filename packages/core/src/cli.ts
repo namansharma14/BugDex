@@ -81,6 +81,7 @@ program
   .description("List the catalogued species.")
   .option("--type <type>", "filter by bug type")
   .option("--status <status>", "filter by status (caught|recurring|nemesis|sealed)")
+  .option("--flair <level>", "override flair: high | medium | off")
   .option("-C, --dir <path>", "repo root (defaults to the current directory)")
   .action(async (opts: DexCliOptions) => {
     await runDex(opts);
@@ -98,6 +99,7 @@ program
   .command("card")
   .description("Show a compact trainer card plus any active Nemeses.")
   .option("--hook", "emit SessionStart additionalContext JSON (reads stdin)")
+  .option("--flair <level>", "override flair: high | medium | off")
   .option("-C, --dir <path>", "repo root (defaults to the current directory)")
   .action(async (opts: CardCliOptions) => {
     await runCard(opts);

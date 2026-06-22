@@ -14,3 +14,4 @@ export * from "./schema/index.js";
 export * from "./storage/index.js";
 export * from "./progression/index.js";
 export * from "./matcher/index.js";
+export * from "./render/index.js";
