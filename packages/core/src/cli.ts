@@ -7,6 +7,9 @@ import { runSeal, type SealCliOptions } from "./commands/seal.js";
 import { runMatch, type MatchCliOptions } from "./commands/match.js";
 import { runDex, type DexCliOptions } from "./commands/dex.js";
 import { runStats, type StatsCliOptions } from "./commands/stats.js";
+import { runCard, type CardCliOptions } from "./commands/card.js";
+import { runScan } from "./commands/scan.js";
+import { runDashboard } from "./commands/dashboard.js";
 
 const program = new Command();
 
@@ -31,6 +34,7 @@ program
   .description("Recognise catalogued species in the given files (the fast matcher).")
   .option("--json", "emit matches as JSON")
   .option("--no-record", "do not record encounters")
+  .option("--hook-input", "read a PostToolUse hook payload on stdin (never blocks)")
   .option("-C, --dir <path>", "repo root for .bugdex (defaults to the current directory)")
   .action(async (paths: string[], opts: MatchCliOptions) => {
     await runMatch(paths, opts);
@@ -88,6 +92,33 @@ program
   .option("-C, --dir <path>", "repo root (defaults to the current directory)")
   .action(async (opts: StatsCliOptions) => {
     await runStats(opts);
+  });
+
+program
+  .command("card")
+  .description("Show a compact trainer card plus any active Nemeses.")
+  .option("--hook", "emit SessionStart additionalContext JSON (reads stdin)")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (opts: CardCliOptions) => {
+    await runCard(opts);
+  });
+
+program
+  .command("scan")
+  .description("Deep on-demand hunt for NEW species (full loop lands in M5).")
+  .allowUnknownOption(true)
+  .allowExcessArguments(true)
+  .action(async () => {
+    await runScan();
+  });
+
+program
+  .command("dashboard")
+  .description("Serve the Pokédex web UI (lands in M6).")
+  .allowUnknownOption(true)
+  .allowExcessArguments(true)
+  .action(async () => {
+    await runDashboard();
   });
 
 async function main(): Promise<void> {

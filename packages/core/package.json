@@ -44,7 +44,8 @@
     "zod": "^3.24.0"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsup --config tsup.plugin.config.ts",
+    "build:plugin": "tsup --config tsup.plugin.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

@@ -7,6 +7,9 @@ import type { Encounter, Species } from "../src/schema/index.js";
 /** Absolute path to the seeded fixtures directory. */
 export const FIXTURES_DIR = fileURLToPath(new URL("../fixtures", import.meta.url));
 
+/** Absolute path to the monorepo root. */
+export const REPO_ROOT = fileURLToPath(new URL("../../..", import.meta.url));
+
 /** Create an isolated temp directory to act as a repo root. */
 export async function makeTempRepo(): Promise<string> {
   return mkdtemp(join(tmpdir(), "bugdex-"));

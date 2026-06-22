@@ -30,7 +30,7 @@ bug classes out of the codebase with a test or lint rule.
 | M0        | Monorepo scaffold             | ✅    |
 | M1        | Core data model & storage     | ✅    |
 | M2        | Fast matcher + catch/seal CLI | ✅    |
-| M3        | Claude Code plugin adapter    | ⏳    |
+| M3        | Claude Code plugin adapter    | ✅    |
 | M4        | Terminal rendering & flair    | ⏳    |
 | M5        | Deep discovery loop           | ⏳    |
 | M6        | Pokédex dashboard             | ⏳    |

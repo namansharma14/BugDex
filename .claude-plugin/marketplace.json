@@ -1,0 +1,16 @@
+{
+  "name": "bugdex",
+  "owner": {
+    "name": "Naman Sharma",
+    "email": "naman.work13@gmail.com"
+  },
+  "version": "0.1.0",
+  "description": "BugDex — gamified bug & vulnerability memory for Claude Code.",
+  "plugins": [
+    {
+      "name": "bugdex",
+      "source": "./plugins/bugdex",
+      "description": "Catalogue, recognise, and gamify bug fixing."
+    }
+  ]
+}

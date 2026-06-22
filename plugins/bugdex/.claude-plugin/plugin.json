@@ -1,0 +1,12 @@
+{
+  "name": "bugdex",
+  "version": "0.1.0",
+  "description": "A Pokédex for your codebase: catalogue every bug you fix, recognise recurrences instantly with the saved fix, and gamify the hunt.",
+  "author": {
+    "name": "Naman Sharma",
+    "email": "naman.work13@gmail.com"
+  },
+  "repository": "https://github.com/namansharma14/bugdex",
+  "keywords": ["security", "bugs", "vulnerabilities", "code-review", "gamification"],
+  "license": "MIT"
+}
