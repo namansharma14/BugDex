@@ -9,7 +9,7 @@ import { runDex, type DexCliOptions } from "./commands/dex.js";
 import { runStats, type StatsCliOptions } from "./commands/stats.js";
 import { runCard, type CardCliOptions } from "./commands/card.js";
 import { runScan, type ScanCliOptions } from "./commands/scan.js";
-import { runDashboard } from "./commands/dashboard.js";
+import { runDashboard, type DashboardCliOptions } from "./commands/dashboard.js";
 
 const program = new Command();
 
@@ -119,11 +119,11 @@ program
 
 program
   .command("dashboard")
-  .description("Serve the Pokédex web UI (lands in M6).")
-  .allowUnknownOption(true)
-  .allowExcessArguments(true)
-  .action(async () => {
-    await runDashboard();
+  .description("Serve the Pokédex web dashboard.")
+  .option("--port <port>", "port to listen on (default 4317)")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (opts: DashboardCliOptions) => {
+    await runDashboard(opts);
   });
 
 async function main(): Promise<void> {

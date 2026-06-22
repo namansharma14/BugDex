@@ -16,3 +16,4 @@ export * from "./progression/index.js";
 export * from "./matcher/index.js";
 export * from "./render/index.js";
 export * from "./scan/index.js";
+export * from "./dashboard/index.js";

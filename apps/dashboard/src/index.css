@@ -1,0 +1,486 @@
+:root {
+  --red: #d7263d;
+  --red-dark: #a51c2c;
+  --ink: #0b1020;
+  --screen: #10182e;
+  --screen-2: #16213e;
+  --green: #173f2a;
+  --green-2: #1f5a3a;
+  --text: #e8ecf6;
+  --muted: #9aa6c2;
+  --line: #2a3550;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #070a14;
+  color: var(--text);
+  font:
+    14px/1.5 ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+code,
+pre {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+.pokedex {
+  max-width: 1180px;
+  margin: 18px auto;
+  background: linear-gradient(160deg, var(--red), var(--red-dark));
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.pokedex-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 14px;
+}
+.lamp {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff6;
+  box-shadow: inset 0 0 4px #0006;
+}
+.lamp.big {
+  width: 34px;
+  height: 34px;
+  background: radial-gradient(circle at 35% 30%, #8fd0ff, #1f6feb);
+  border: 3px solid #eaf2ff;
+}
+.lamp.red {
+  background: #ff5b5b;
+}
+.lamp.yellow {
+  background: #ffd23f;
+}
+.lamp.green {
+  background: #51cf66;
+}
+.brand {
+  margin-left: auto;
+  font-weight: 800;
+  letter-spacing: 2px;
+  font-size: 20px;
+  color: #fff;
+  text-shadow: 0 2px 0 #0004;
+}
+
+.pokedex-body {
+  background: var(--ink);
+  border-radius: 12px;
+  border: 3px solid #0006;
+  padding: 14px;
+  min-height: 520px;
+}
+
+.loading {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+/* Trainer card */
+.trainer,
+.regional,
+.nemesis-board {
+  background: var(--screen);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.trainer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.trainer-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+.trainer-rank {
+  color: #ffd23f;
+  font-weight: 700;
+  font-size: 12px;
+}
+.trainer-flavor {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 12px;
+  margin: 2px 0 10px;
+}
+.xpbar {
+  height: 10px;
+  background: #0c1226;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.xpbar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1f6feb, #8fd0ff);
+}
+.xp-label {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 6px 0 10px;
+}
+.trainer-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.stat {
+  background: #0c1226;
+  border-radius: 8px;
+  padding: 6px 4px;
+  text-align: center;
+}
+.stat-value {
+  font-weight: 800;
+  font-size: 16px;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+}
+.badges {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.trophy {
+  font-size: 11px;
+  background: #0c1226;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* Regional meter */
+.regional-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
+.region-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.region-cell.off {
+  color: #56607c;
+  opacity: 0.6;
+}
+.region-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+
+/* Nemesis board */
+.nemesis-board {
+  border-color: #5a1f2a;
+  background: #1a0f16;
+}
+.nemesis-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: #120b10;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 8px;
+  margin-top: 6px;
+  cursor: pointer;
+}
+.nemesis-row .how {
+  font-size: 10px;
+  color: #ff8f8f;
+}
+
+/* Entry detail (dark screen) */
+.entry {
+  background: var(--screen-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  height: 100%;
+}
+.empty-entry {
+  color: var(--muted);
+  text-align: center;
+  padding: 60px 12px;
+}
+.entry-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.entry-num {
+  color: var(--muted);
+  font-size: 12px;
+}
+.entry-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.entry-common {
+  color: var(--muted);
+}
+.entry-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.entry-desc {
+  color: #cdd6ee;
+}
+.entry-cwe {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1px 6px;
+}
+.fix {
+  background: var(--green);
+  border: 1px solid var(--green-2);
+  border-radius: 8px;
+  padding: 10px;
+  margin: 12px 0;
+}
+.fix p {
+  margin: 0;
+}
+.fix pre {
+  margin: 8px 0 0;
+  background: #0b1f15;
+  padding: 8px;
+  border-radius: 6px;
+  overflow: auto;
+  font-size: 12px;
+}
+.entry-foot {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Badges, dots, pills */
+.badge {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-shadow: 0 1px 0 #0005;
+}
+.rarity {
+  letter-spacing: 2px;
+}
+.rarity .dim {
+  color: #46506e;
+}
+.rarity-common {
+  color: #9ca3af;
+}
+.rarity-uncommon {
+  color: #22c55e;
+}
+.rarity-rare {
+  color: #3b82f6;
+}
+.rarity-legendary {
+  color: #f59e0b;
+}
+.sev {
+  font-size: 11px;
+  color: var(--muted);
+}
+.pill {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.pill-caught {
+  color: var(--muted);
+}
+.pill-recurring {
+  color: #ffd23f;
+  border-color: #6a5a1f;
+}
+.pill-nemesis {
+  background: var(--red);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 800;
+}
+.pill-sealed {
+  color: #51cf66;
+  border-color: #1f5a3a;
+}
+
+/* Seal form */
+.seal-form {
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.seal-form.is-nemesis .section-title {
+  color: #ff8f8f;
+}
+.seal-row {
+  display: flex;
+  gap: 6px;
+}
+.seal-row input {
+  flex: 1;
+  min-width: 0;
+}
+.sealed-box {
+  margin-top: 10px;
+  background: var(--green);
+  border: 1px solid var(--green-2);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+}
+.err {
+  color: #ff8f8f;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+input,
+select,
+button {
+  background: #0c1226;
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  font-weight: 700;
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Dex grid (green sub-screen) */
+.dexgrid-wrap {
+  background: var(--green);
+  border: 1px solid var(--green-2);
+  border-radius: 10px;
+  padding: 12px;
+  height: 100%;
+}
+.filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.filters select {
+  flex: 1;
+  text-transform: capitalize;
+}
+.dexgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px;
+}
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #0b1f15;
+  border: 1px solid var(--line);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: 8px 4px;
+  color: var(--text);
+  cursor: pointer;
+}
+.cell.sel {
+  outline: 2px solid #8fd0ff;
+}
+.cell-num {
+  font-size: 10px;
+  color: var(--muted);
+}
+.cell-name {
+  font-size: 11px;
+  font-weight: 700;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell.status-nemesis {
+  box-shadow: 0 0 0 1px #d7263d inset;
+}
+.cell.empty {
+  align-items: center;
+  justify-content: center;
+  color: #2f6b4a;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: default;
+  border-left-width: 1px;
+  border-style: dashed;
+}

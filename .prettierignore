@@ -5,6 +5,9 @@ package-lock.json
 plugins/**/bin/
 *.cjs
 
+# Generated, inlined dashboard build.
+**/*.generated.ts
+
 # Seeded test fixtures — intentionally buggy, kept verbatim.
 packages/*/fixtures/
 

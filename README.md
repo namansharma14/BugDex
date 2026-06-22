@@ -33,7 +33,7 @@ bug classes out of the codebase with a test or lint rule.
 | M3        | Claude Code plugin adapter    | ✅    |
 | M4        | Terminal rendering & flair    | ✅    |
 | M5        | Deep discovery loop           | ✅    |
-| M6        | Pokédex dashboard             | ⏳    |
+| M6        | Pokédex dashboard             | ✅    |
 | M7        | Docs, polish, publish         | ⏳    |
 
 ## Repository layout

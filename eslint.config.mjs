@@ -10,8 +10,10 @@ export default tseslint.config(
       "**/node_modules/**",
       "**/coverage/**",
       "**/fixtures/**",
+      "**/*.generated.ts",
       "plugins/**/bin/**",
-      "apps/**/dist/**",
+      // The dashboard app is type-checked + built by Vite with its own tsconfig.
+      "apps/**",
     ],
   },
   js.configs.recommended,
