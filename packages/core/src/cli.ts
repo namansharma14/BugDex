@@ -1,20 +1,36 @@
 #!/usr/bin/env node
+import { Command } from "commander";
 import { VERSION } from "./index.js";
+import { runInit } from "./commands/init.js";
 
-/**
- * BugDex CLI entrypoint.
- *
- * Real command wiring (init, match, catch, seal, dex, scan, dashboard …)
- * arrives in later milestones. For now it answers `--version` so the build
- * produces a runnable binary that the scaffold can verify.
- */
-function main(argv: string[]): void {
-  const args = argv.slice(2);
-  if (args.includes("--version") || args.includes("-v")) {
-    process.stdout.write(`${VERSION}\n`);
-    return;
-  }
-  process.stdout.write(`bugdex v${VERSION}\n`);
+const program = new Command();
+
+program
+  .name("bugdex")
+  .description("A Pokédex for your codebase — catalogue, recognise, and gamify bug fixing.")
+  .version(VERSION, "-v, --version", "print the BugDex version");
+
+program
+  .command("init")
+  .description("Create a .bugdex/ directory (dex, config, trainer) in a repo.")
+  .option("--team", "commit an anonymised team trainer instead of gitignoring it")
+  .option("--force", "overwrite existing .bugdex files")
+  .option("-C, --dir <path>", "target repo root (defaults to the current directory)")
+  .action(async (opts: InitCommandOptions) => {
+    await runInit(opts);
+  });
+
+interface InitCommandOptions {
+  team?: boolean;
+  force?: boolean;
+  dir?: string;
 }
 
-main(process.argv);
+async function main(): Promise<void> {
+  await program.parseAsync(process.argv);
+}
+
+main().catch((err: unknown) => {
+  process.stderr.write(`bugdex: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.exitCode = 1;
+});

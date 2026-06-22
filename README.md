@@ -28,7 +28,7 @@ bug classes out of the codebase with a test or lint rule.
 | Milestone | What                          | State |
 | --------- | ----------------------------- | ----- |
 | M0        | Monorepo scaffold             | ✅    |
-| M1        | Core data model & storage     | ⏳    |
+| M1        | Core data model & storage     | ✅    |
 | M2        | Fast matcher + catch/seal CLI | ⏳    |
 | M3        | Claude Code plugin adapter    | ⏳    |
 | M4        | Terminal rendering & flair    | ⏳    |
