@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { VERSION } from "./index.js";
-import { runInit } from "./commands/init.js";
+import { runInit, type InitCliOptions } from "./commands/init.js";
+import { runCatch, type CatchCliOptions } from "./commands/catch.js";
+import { runSeal, type SealCliOptions } from "./commands/seal.js";
+import { runMatch, type MatchCliOptions } from "./commands/match.js";
+import { runDex, type DexCliOptions } from "./commands/dex.js";
+import { runStats, type StatsCliOptions } from "./commands/stats.js";
 
 const program = new Command();
 
@@ -16,15 +21,74 @@ program
   .option("--team", "commit an anonymised team trainer instead of gitignoring it")
   .option("--force", "overwrite existing .bugdex files")
   .option("-C, --dir <path>", "target repo root (defaults to the current directory)")
-  .action(async (opts: InitCommandOptions) => {
+  .action(async (opts: InitCliOptions) => {
     await runInit(opts);
   });
 
-interface InitCommandOptions {
-  team?: boolean;
-  force?: boolean;
-  dir?: string;
-}
+program
+  .command("match")
+  .argument("[paths...]", "files or directories to scan (defaults to the current directory)")
+  .description("Recognise catalogued species in the given files (the fast matcher).")
+  .option("--json", "emit matches as JSON")
+  .option("--no-record", "do not record encounters")
+  .option("-C, --dir <path>", "repo root for .bugdex (defaults to the current directory)")
+  .action(async (paths: string[], opts: MatchCliOptions) => {
+    await runMatch(paths, opts);
+  });
+
+program
+  .command("catch")
+  .description("Manually catalogue a new bug species.")
+  .requiredOption(
+    "--type <type>",
+    "bug type (null|injection|concurrency|memory|logic|crypto|auth|resource|type|config)",
+  )
+  .requiredOption("--common <name>", 'plain-English name, e.g. "Unguarded null dereference"')
+  .option("--name <codename>", "memorable codename (auto-generated if omitted)")
+  .option("--severity <1-5>", "severity 1–5 (default 3)")
+  .option("--description <text>", "one-line dossier")
+  .option("--fix <summary>", "how to fix it")
+  .option("--pattern <regex>", "regex signature to re-catch this class")
+  .option("--flags <flags>", "regex flags for --pattern")
+  .option("--rule <name>", "named structural-rule signature")
+  .option("--lang <langs>", "comma-separated languages the signature applies to")
+  .option("--file <path>", "file where it was caught (records an encounter)")
+  .option("--line <n>", "line number for the encounter")
+  .option("--cwe <id>", "CWE id, e.g. CWE-89")
+  .option("--tags <tags>", "comma-separated tags")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (opts: CatchCliOptions) => {
+    await runCatch(opts);
+  });
+
+program
+  .command("seal")
+  .argument("<id>", "species id to seal")
+  .description("Seal a species with a permanent guard (the apex move).")
+  .option("--kind <kind>", "guard kind: test|lint-rule|type|assertion (default test)")
+  .option("--ref <reference>", "reference to the guard, e.g. tests/null_guard.test.ts")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (id: string, opts: SealCliOptions) => {
+    await runSeal(id, opts);
+  });
+
+program
+  .command("dex")
+  .description("List the catalogued species.")
+  .option("--type <type>", "filter by bug type")
+  .option("--status <status>", "filter by status (caught|recurring|nemesis|sealed)")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (opts: DexCliOptions) => {
+    await runDex(opts);
+  });
+
+program
+  .command("stats")
+  .description("Show the trainer card (rank, XP, stats, streak, badges).")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (opts: StatsCliOptions) => {
+    await runStats(opts);
+  });
 
 async function main(): Promise<void> {
   await program.parseAsync(process.argv);

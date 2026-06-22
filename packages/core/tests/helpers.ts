@@ -1,11 +1,20 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Species } from "../src/schema/index.js";
+import { fileURLToPath } from "node:url";
+import type { Encounter, Species } from "../src/schema/index.js";
+
+/** Absolute path to the seeded fixtures directory. */
+export const FIXTURES_DIR = fileURLToPath(new URL("../fixtures", import.meta.url));
 
 /** Create an isolated temp directory to act as a repo root. */
 export async function makeTempRepo(): Promise<string> {
   return mkdtemp(join(tmpdir(), "bugdex-"));
+}
+
+/** Build a valid {@link Encounter}. */
+export function enc(at: string, file = "src/a.ts", via: Encounter["via"] = "matcher"): Encounter {
+  return { at, file, via };
 }
 
 /** Recursively remove a temp directory. */

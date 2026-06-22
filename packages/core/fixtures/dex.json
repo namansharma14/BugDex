@@ -1,0 +1,186 @@
+{
+  "version": 1,
+  "species": [
+    {
+      "id": "parselmouth",
+      "dexNumber": 1,
+      "name": "PARSELMOUTH",
+      "commonName": "SQL injection via string concatenation",
+      "type": "injection",
+      "rarity": "legendary",
+      "severity": 5,
+      "description": "User input concatenated directly into a SQL query string.",
+      "cwe": "CWE-89",
+      "signatures": [
+        {
+          "kind": "regex",
+          "pattern": "(query|execute)\\(.*['\"].*['\"]\\s*\\+",
+          "languages": ["typescript", "javascript"]
+        }
+      ],
+      "fix": {
+        "summary": "Use parameterised queries / prepared statements; never concatenate user input into SQL."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["sql", "owasp-a03"]
+    },
+    {
+      "id": "hashwraith",
+      "dexNumber": 2,
+      "name": "HASHWRAITH",
+      "commonName": "Weak hash algorithm (MD5/SHA-1)",
+      "type": "crypto",
+      "rarity": "rare",
+      "severity": 4,
+      "description": "A cryptographically broken hash used where collision resistance matters.",
+      "cwe": "CWE-327",
+      "signatures": [
+        {
+          "kind": "regex",
+          "pattern": "createHash\\(\\s*['\"](md5|sha1)['\"]\\s*\\)",
+          "flags": "i",
+          "languages": ["typescript", "javascript"]
+        }
+      ],
+      "fix": {
+        "summary": "Use SHA-256+ for integrity and bcrypt/scrypt/argon2 for passwords; MD5 and SHA-1 are broken."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["hashing"]
+    },
+    {
+      "id": "ghostkey",
+      "dexNumber": 3,
+      "name": "GHOSTKEY",
+      "commonName": "Hardcoded secret",
+      "type": "crypto",
+      "rarity": "rare",
+      "severity": 4,
+      "description": "An API key, token, or password committed directly into source.",
+      "cwe": "CWE-798",
+      "signatures": [
+        {
+          "kind": "regex",
+          "pattern": "(api[_-]?key|secret|password|token)\\s*[:=]\\s*['\"][^'\"]{6,}['\"]",
+          "flags": "i"
+        }
+      ],
+      "fix": {
+        "summary": "Move secrets to environment variables or a secrets manager, and rotate the exposed credential."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["secrets"]
+    },
+    {
+      "id": "voidling",
+      "dexNumber": 4,
+      "name": "VOIDLING",
+      "commonName": "Unguarded environment variable dereference",
+      "type": "null",
+      "rarity": "common",
+      "severity": 2,
+      "description": "Calling a method on process.env.X, which may be undefined at runtime.",
+      "signatures": [
+        {
+          "kind": "regex",
+          "pattern": "process\\.env\\.[A-Za-z_][A-Za-z0-9_]*\\.\\w",
+          "languages": ["typescript", "javascript"]
+        }
+      ],
+      "fix": {
+        "summary": "Read the env var into a variable and guard it before use (throw or default if missing)."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["null-safety", "env"]
+    },
+    {
+      "id": "moongaze",
+      "dexNumber": 5,
+      "name": "MOONGAZE",
+      "commonName": "Loose equality comparison",
+      "type": "logic",
+      "rarity": "common",
+      "severity": 2,
+      "description": "Using == / != invites type coercion bugs; prefer === / !==.",
+      "signatures": [
+        {
+          "kind": "structural",
+          "rule": "loose-equality",
+          "languages": ["typescript", "javascript"]
+        }
+      ],
+      "fix": {
+        "summary": "Use strict equality (=== / !==) so values aren't silently coerced."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["equality"]
+    },
+    {
+      "id": "debugmon",
+      "dexNumber": 6,
+      "name": "DEBUGMON",
+      "commonName": "Debug mode enabled in source",
+      "type": "config",
+      "rarity": "uncommon",
+      "severity": 3,
+      "description": "DEBUG hardcoded to True leaks stack traces and settings in production.",
+      "cwe": "CWE-489",
+      "signatures": [
+        {
+          "kind": "regex",
+          "pattern": "^\\s*DEBUG\\s*=\\s*True\\b",
+          "languages": ["python"]
+        }
+      ],
+      "fix": {
+        "summary": "Drive DEBUG from an environment variable; never ship DEBUG = True."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["django", "production"]
+    },
+    {
+      "id": "randoghast",
+      "dexNumber": 7,
+      "name": "RANDOGHAST",
+      "commonName": "Insecure randomness",
+      "type": "crypto",
+      "rarity": "uncommon",
+      "severity": 3,
+      "description": "Math.random() is not cryptographically secure; unsafe for tokens/ids.",
+      "cwe": "CWE-338",
+      "signatures": [
+        {
+          "kind": "regex",
+          "pattern": "Math\\.random\\(\\)",
+          "languages": ["typescript", "javascript"]
+        }
+      ],
+      "fix": {
+        "summary": "Use crypto.randomUUID() or crypto.getRandomValues() for security-sensitive values."
+      },
+      "status": "caught",
+      "encounters": [],
+      "firstSeen": "2026-01-01T00:00:00.000Z",
+      "lastSeen": "2026-01-01T00:00:00.000Z",
+      "tags": ["randomness"]
+    }
+  ]
+}

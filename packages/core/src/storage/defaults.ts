@@ -41,16 +41,18 @@ function zeroByType(): Record<BugType, number> {
   return out;
 }
 
+/** Sentinel "never active" timestamp so the first activity starts a streak. */
+const NEVER_ACTIVE = new Date(0).toISOString();
+
 /** A fresh trainer at rank 1 with zeroed stats. */
 export function defaultTrainer(name: string): Trainer {
-  const now = new Date().toISOString();
   return {
     version: TRAINER_VERSION,
     name,
     xp: 0,
     rank: ROOKIE_RANK,
     title: ROOKIE_TITLE,
-    streak: { current: 0, longest: 0, lastActive: now },
+    streak: { current: 0, longest: 0, lastActive: NEVER_ACTIVE },
     stats: { caught: 0, encounters: 0, sealed: 0, byType: zeroByType() },
     badges: [],
     history: [],
