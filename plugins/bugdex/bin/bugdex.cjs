@@ -3455,6 +3455,18 @@ function rarityForSeverity(severity) {
       return "common";
   }
 }
+function severityRangeForRarity(rarity) {
+  switch (rarity) {
+    case "legendary":
+      return [5, 5];
+    case "rare":
+      return [4, 4];
+    case "uncommon":
+      return [3, 3];
+    case "common":
+      return [1, 2];
+  }
+}
 
 // ../../node_modules/zod/v3/external.js
 var external_exports = {};
@@ -8894,11 +8906,106 @@ function renderDex(rows, flair, painter = createPainter(flair !== "off" && defau
   return lines.join("\n");
 }
 
-// src/index.ts
-var VERSION = "0.1.0";
+// src/scan/candidate.ts
+var candidateSchema = external_exports.object({
+  name: external_exports.string().optional(),
+  commonName: external_exports.string().min(1),
+  type: bugTypeSchema,
+  severity: severitySchema.optional(),
+  rarity: raritySchema.optional(),
+  description: external_exports.string().optional(),
+  cwe: external_exports.string().optional(),
+  file: external_exports.string().optional(),
+  line: external_exports.number().int().positive().optional(),
+  /** Offending code, used for de-duplication and signature generation. */
+  snippet: external_exports.string().optional(),
+  fix: external_exports.object({ summary: external_exports.string(), patch: external_exports.string().optional() }).optional(),
+  signature: signatureSchema.optional(),
+  tags: external_exports.array(external_exports.string()).optional()
+});
+var candidatesSchema = external_exports.union([candidateSchema, external_exports.array(candidateSchema)]);
+function asCandidateArray(parsed) {
+  return Array.isArray(parsed) ? parsed : [parsed];
+}
 
-// src/commands/init.ts
+// src/scan/signature-gen.ts
+function snippetToRegex(snippet) {
+  const line = snippet.split(/\r?\n/).map((l) => l.trim()).find((l) => l.length > 0) ?? snippet.trim();
+  const escaped = line.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return escaped.replace(/\s+/g, "\\s+").slice(0, 200);
+}
+function generateSignature(candidate) {
+  if (candidate.signature) return candidate.signature;
+  if (!candidate.snippet) return void 0;
+  const pattern = snippetToRegex(candidate.snippet);
+  if (pattern.length === 0 || !isLikelySafeRegex(pattern)) return void 0;
+  const language = candidate.file ? languageForFile(candidate.file) : void 0;
+  return { kind: "regex", pattern, ...language ? { languages: [language] } : {} };
+}
+
+// src/scan/dedupe.ts
+function findCoveringSpecies(candidate, dex) {
+  if (candidate.signature) {
+    const target = JSON.stringify(candidate.signature);
+    const bySignature = dex.species.find(
+      (s) => s.signatures.some((sig) => JSON.stringify(sig) === target)
+    );
+    if (bySignature) return bySignature;
+  }
+  if (candidate.snippet) {
+    const file = candidate.file ?? "candidate.txt";
+    const matches = matchFile({ file, content: candidate.snippet, dex });
+    if (matches.length > 0) {
+      const covering = dex.species.find((s) => s.id === matches[0].speciesId);
+      if (covering) return covering;
+    }
+  }
+  return void 0;
+}
+
+// src/scan/collect.ts
+var import_node_path6 = require("path");
+
+// src/util/files.ts
+var import_promises4 = require("fs/promises");
 var import_node_path5 = require("path");
+var SKIP_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "coverage", ".bugdex"]);
+async function collectFiles(inputs, opts = {}) {
+  const maxFiles = opts.maxFiles ?? 5e3;
+  const out = [];
+  const walkDir = async (dir) => {
+    if (out.length >= maxFiles) return;
+    if (SKIP_DIRS.has((0, import_node_path5.basename)(dir))) return;
+    let entries;
+    try {
+      entries = await (0, import_promises4.readdir)(dir);
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (out.length >= maxFiles) break;
+      const full = (0, import_node_path5.join)(dir, entry);
+      const info = await (0, import_promises4.stat)(full).catch(() => null);
+      if (!info) continue;
+      if (info.isDirectory()) await walkDir(full);
+      else if (info.isFile() && languageForFile(full)) out.push(full);
+    }
+  };
+  for (const input of inputs) {
+    const info = await (0, import_promises4.stat)(input).catch(() => null);
+    if (!info) continue;
+    if (info.isFile()) out.push(input);
+    else if (info.isDirectory()) await walkDir(input);
+  }
+  return out;
+}
+async function readFileSafe(path) {
+  try {
+    return await (0, import_promises4.readFile)(path, "utf8");
+  } catch {
+    return null;
+  }
+}
 
 // src/util/git.ts
 var import_node_child_process = require("child_process");
@@ -8913,10 +9020,76 @@ async function getGitUserName(cwd) {
     return void 0;
   }
 }
+var MAX_DIFF_BUFFER = 16 * 1024 * 1024;
+async function gitDiff(cwd, ref = "HEAD") {
+  try {
+    const { stdout } = await run("git", ["diff", ref], { cwd, maxBuffer: MAX_DIFF_BUFFER });
+    return stdout;
+  } catch {
+    return "";
+  }
+}
+async function gitChangedFiles(cwd, ref = "HEAD") {
+  const lines = async (args) => {
+    try {
+      const { stdout } = await run("git", args, { cwd, maxBuffer: MAX_DIFF_BUFFER });
+      return stdout.split("\n").map((s) => s.trim()).filter(Boolean);
+    } catch {
+      return [];
+    }
+  };
+  const tracked = await lines(["diff", "--name-only", ref]);
+  const untracked = await lines(["ls-files", "--others", "--exclude-standard"]);
+  return [.../* @__PURE__ */ new Set([...tracked, ...untracked])];
+}
+
+// src/scan/collect.ts
+async function readFiles(files, maxFiles, maxBytes) {
+  const out = [];
+  for (const file of files.slice(0, maxFiles)) {
+    const content = await readFileSafe(file);
+    if (content === null) continue;
+    out.push({ file, language: languageForFile(file), content: content.slice(0, maxBytes) });
+  }
+  return out;
+}
+async function collectScan(opts) {
+  const maxFiles = opts.maxFiles ?? 50;
+  const maxFileBytes = opts.maxFileBytes ?? 64 * 1024;
+  const maxDiffBytes = opts.maxDiffBytes ?? 2e5;
+  const { dex } = await loadDex(resolvePaths(opts.root).dex);
+  const dexSummary = {
+    count: dex.species.length,
+    species: dex.species.map((s) => ({
+      id: s.id,
+      name: s.name,
+      type: s.type,
+      commonName: s.commonName,
+      signatures: s.signatures
+    }))
+  };
+  const usePath = opts.paths !== void 0 && opts.paths.length > 0 && !opts.diff;
+  if (usePath) {
+    const files = await collectFiles(opts.paths ?? [], { maxFiles });
+    return { mode: "path", files: await readFiles(files, maxFiles, maxFileBytes), dexSummary };
+  }
+  const diff = await gitDiff(opts.root);
+  const changed = (await gitChangedFiles(opts.root)).map((f) => (0, import_node_path6.isAbsolute)(f) ? f : (0, import_node_path6.join)(opts.root, f)).filter((f) => languageForFile(f) !== void 0);
+  return {
+    mode: "diff",
+    diff: diff.slice(0, maxDiffBytes),
+    files: await readFiles(changed, maxFiles, maxFileBytes),
+    dexSummary
+  };
+}
+
+// src/index.ts
+var VERSION = "0.1.0";
 
 // src/commands/init.ts
+var import_node_path7 = require("path");
 async function runInit(opts) {
-  const root = (0, import_node_path5.resolve)(opts.dir ?? process.cwd());
+  const root = (0, import_node_path7.resolve)(opts.dir ?? process.cwd());
   const trainerName = await getGitUserName(root) ?? "Trainer";
   const result = await init({
     root,
@@ -8924,7 +9097,7 @@ async function runInit(opts) {
     force: opts.force,
     trainerName
   });
-  const rel = (p) => (0, import_node_path5.relative)(root, p) || p;
+  const rel = (p) => (0, import_node_path7.relative)(root, p) || p;
   const out = process.stdout;
   out.write("BugDex initialised.\n");
   if (result.created.length > 0) {
@@ -8945,6 +9118,26 @@ async function runInit(opts) {
   out.write("\nNext: run `bugdex --help` to see available commands.\n");
 }
 
+// src/util/stdin.ts
+async function readStdin() {
+  if (process.stdin.isTTY) return "";
+  const chunks = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+async function readHookInput() {
+  try {
+    const raw = await readStdin();
+    if (!raw.trim()) return {};
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 // src/commands/catch.ts
 async function catchSpecies(input) {
   const paths = resolvePaths(input.root);
@@ -8959,21 +9152,23 @@ async function catchSpecies(input) {
   const taken = new Set(dex.species.map((s) => s.id));
   const id = uniqueId(slugify(input.name ?? input.commonName), taken);
   const dexNumber = dex.species.reduce((max, s) => Math.max(max, s.dexNumber), 0) + 1;
-  const signatures = [];
-  if (input.pattern) {
-    signatures.push({
-      kind: "regex",
-      pattern: input.pattern,
-      ...input.flags ? { flags: input.flags } : {},
-      ...input.languages ? { languages: input.languages } : {}
-    });
-  }
-  if (input.structuralRule) {
-    signatures.push({
-      kind: "structural",
-      rule: input.structuralRule,
-      ...input.languages ? { languages: input.languages } : {}
-    });
+  const signatures = input.signatures ? [...input.signatures] : [];
+  if (!input.signatures) {
+    if (input.pattern) {
+      signatures.push({
+        kind: "regex",
+        pattern: input.pattern,
+        ...input.flags ? { flags: input.flags } : {},
+        ...input.languages ? { languages: input.languages } : {}
+      });
+    }
+    if (input.structuralRule) {
+      signatures.push({
+        kind: "structural",
+        rule: input.structuralRule,
+        ...input.languages ? { languages: input.languages } : {}
+      });
+    }
   }
   const encounters = [];
   if (input.file) {
@@ -9025,7 +9220,72 @@ async function catchSpecies(input) {
     newBadges: applied.newBadges
   };
 }
+async function catchFromScan(opts) {
+  const candidates = asCandidateArray(candidatesSchema.parse(JSON.parse(opts.json)));
+  const added = [];
+  const skipped = [];
+  for (const candidate of candidates) {
+    const { dex } = await loadDex(resolvePaths(opts.root).dex);
+    const covering = findCoveringSpecies(candidate, dex);
+    if (covering) {
+      await recordScanEncounter(opts.root, covering, candidate, opts.now);
+      skipped.push({ name: candidate.name ?? candidate.commonName, coveredBy: covering.id });
+      continue;
+    }
+    const signature = generateSignature(candidate);
+    const severity = candidate.severity ?? (candidate.rarity ? severityRangeForRarity(candidate.rarity)[1] : 3);
+    const result = await catchSpecies({
+      root: opts.root,
+      type: candidate.type,
+      commonName: candidate.commonName,
+      name: candidate.name,
+      severity,
+      description: candidate.description,
+      fixSummary: candidate.fix?.summary,
+      fixPatch: candidate.fix?.patch,
+      cwe: candidate.cwe,
+      tags: candidate.tags,
+      signatures: signature ? [signature] : void 0,
+      file: candidate.file,
+      line: candidate.line,
+      source: "scan",
+      discoveredBy: opts.discoveredBy,
+      now: opts.now
+    });
+    added.push({ species: result.species, xpAwarded: result.xpAwarded });
+  }
+  const trainer = await loadTrainer(resolvePaths(opts.root).trainer);
+  return { added, skipped, totalXp: trainer.xp, rank: trainer.rank };
+}
+async function recordScanEncounter(root, species, candidate, now) {
+  const paths = resolvePaths(root);
+  const { dex } = await loadDex(paths.dex);
+  const config = await loadConfig(paths.config);
+  const match = {
+    speciesId: species.id,
+    name: species.name,
+    type: species.type,
+    rarity: species.rarity,
+    severity: species.severity,
+    file: candidate.file ?? "scan",
+    line: candidate.line,
+    confidence: "high",
+    fix: { summary: species.fix.summary },
+    status: species.status,
+    encounters: species.encounters.length
+  };
+  const result = recordEncounters(dex, [match], {
+    nemesisThreshold: config.nemesisThreshold,
+    via: "scan",
+    now
+  });
+  if (result.recorded.length > 0) await saveDex(paths.dex, result.dex);
+}
 async function runCatch(opts) {
+  if (opts.fromScan !== void 0) {
+    await runCatchFromScan(opts);
+    return;
+  }
   if (!opts.type || !isBugType(opts.type)) {
     throw new Error(
       `--type is required and must be one of the ten bug types (got "${opts.type ?? ""}").`
@@ -9071,6 +9331,35 @@ async function runCatch(opts) {
   if (result.rankedUp) out.write(`  \u2B50 Ranked up to ${result.rank}!
 `);
   for (const badge of result.newBadges) out.write(`  \u{1F3C5} Badge earned: ${badge.label}
+`);
+}
+async function runCatchFromScan(opts) {
+  const root = opts.dir ?? process.cwd();
+  let json = typeof opts.fromScan === "string" ? opts.fromScan : "";
+  if (json === "" || json === "-") json = await readStdin();
+  if (!json.trim()) {
+    throw new Error("--from-scan needs JSON candidate(s) as an argument or on stdin.");
+  }
+  const result = await catchFromScan({
+    root,
+    json,
+    discoveredBy: await getGitUserName(root) ?? void 0
+  });
+  const out = process.stdout;
+  for (const a of result.added) {
+    out.write(
+      `Caught #${a.species.dexNumber} ${a.species.name} \u2014 ${a.species.commonName} (+${a.xpAwarded} XP)
+`
+    );
+  }
+  for (const s of result.skipped) {
+    out.write(`Skipped ${s.name} \u2014 already covered by ${s.coveredBy} (recorded an encounter)
+`);
+  }
+  if (result.added.length === 0 && result.skipped.length === 0) {
+    out.write("No candidates to persist.\n");
+  }
+  out.write(`Total XP ${result.totalXp} \xB7 rank: ${result.rank}
 `);
 }
 
@@ -9138,70 +9427,7 @@ async function runSeal(id, opts) {
 }
 
 // src/commands/match.ts
-var import_node_path7 = require("path");
-
-// src/util/files.ts
-var import_promises4 = require("fs/promises");
-var import_node_path6 = require("path");
-var SKIP_DIRS = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", "coverage", ".bugdex"]);
-async function collectFiles(inputs, opts = {}) {
-  const maxFiles = opts.maxFiles ?? 5e3;
-  const out = [];
-  const walkDir = async (dir) => {
-    if (out.length >= maxFiles) return;
-    if (SKIP_DIRS.has((0, import_node_path6.basename)(dir))) return;
-    let entries;
-    try {
-      entries = await (0, import_promises4.readdir)(dir);
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      if (out.length >= maxFiles) break;
-      const full = (0, import_node_path6.join)(dir, entry);
-      const info = await (0, import_promises4.stat)(full).catch(() => null);
-      if (!info) continue;
-      if (info.isDirectory()) await walkDir(full);
-      else if (info.isFile() && languageForFile(full)) out.push(full);
-    }
-  };
-  for (const input of inputs) {
-    const info = await (0, import_promises4.stat)(input).catch(() => null);
-    if (!info) continue;
-    if (info.isFile()) out.push(input);
-    else if (info.isDirectory()) await walkDir(input);
-  }
-  return out;
-}
-async function readFileSafe(path) {
-  try {
-    return await (0, import_promises4.readFile)(path, "utf8");
-  } catch {
-    return null;
-  }
-}
-
-// src/util/stdin.ts
-async function readStdin() {
-  if (process.stdin.isTTY) return "";
-  const chunks = [];
-  for await (const chunk of process.stdin) {
-    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}
-async function readHookInput() {
-  try {
-    const raw = await readStdin();
-    if (!raw.trim()) return {};
-    const parsed = JSON.parse(raw);
-    return typeof parsed === "object" && parsed !== null ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-// src/commands/match.ts
+var import_node_path8 = require("path");
 async function matchAndRecord(input) {
   const paths = resolvePaths(input.root);
   const { dex } = await loadDex(paths.dex);
@@ -9251,7 +9477,7 @@ async function runMatchHook() {
     const toolInput = input.tool_input ?? {};
     const filePath = typeof toolInput.file_path === "string" ? toolInput.file_path : void 0;
     if (!filePath) return;
-    const file = (0, import_node_path7.isAbsolute)(filePath) ? filePath : (0, import_node_path7.resolve)(cwd, filePath);
+    const file = (0, import_node_path8.isAbsolute)(filePath) ? filePath : (0, import_node_path8.resolve)(cwd, filePath);
     const config = await loadConfig(resolvePaths(cwd).config);
     if (config.flair === "off") return;
     const { matches } = await matchAndRecord({ root: cwd, files: [file] });
@@ -9464,15 +9690,27 @@ async function runCardHook(opts) {
 }
 
 // src/commands/scan.ts
-async function runScan() {
-  process.stdout.write(
-    [
-      "bugdex scan \u2014 the deep discovery loop arrives in milestone M5.",
-      "For now: catalogue bugs with `bugdex catch`, and the fast matcher",
-      "(`bugdex match`) will recognise recurrences automatically.",
-      ""
-    ].join("\n")
-  );
+async function runScan(paths, opts) {
+  const root = opts.dir ?? process.cwd();
+  if (!opts.collect) {
+    process.stdout.write(
+      [
+        "bugdex scan \u2014 deep discovery runs via the `/bugdex:scan` slash command:",
+        "it collects context (`bugdex scan --collect`), analyses it with the",
+        "read-only bug-hunter subagent, then persists confirmed species with",
+        "`bugdex catch --from-scan`.",
+        ""
+      ].join("\n")
+    );
+    return;
+  }
+  const collection = await collectScan({
+    root,
+    paths: paths.length > 0 ? paths : void 0,
+    diff: opts.diff
+  });
+  process.stdout.write(`${JSON.stringify(collection, null, 2)}
+`);
 }
 
 // src/commands/dashboard.ts
@@ -9495,10 +9733,10 @@ program2.command("init").description("Create a .bugdex/ directory (dex, config, 
 program2.command("match").argument("[paths...]", "files or directories to scan (defaults to the current directory)").description("Recognise catalogued species in the given files (the fast matcher).").option("--json", "emit matches as JSON").option("--no-record", "do not record encounters").option("--hook-input", "read a PostToolUse hook payload on stdin (never blocks)").option("-C, --dir <path>", "repo root for .bugdex (defaults to the current directory)").action(async (paths, opts) => {
   await runMatch(paths, opts);
 });
-program2.command("catch").description("Manually catalogue a new bug species.").requiredOption(
+program2.command("catch").description("Manually catalogue a new bug species (or --from-scan to persist candidates).").option(
   "--type <type>",
   "bug type (null|injection|concurrency|memory|logic|crypto|auth|resource|type|config)"
-).requiredOption("--common <name>", 'plain-English name, e.g. "Unguarded null dereference"').option("--name <codename>", "memorable codename (auto-generated if omitted)").option("--severity <1-5>", "severity 1\u20135 (default 3)").option("--description <text>", "one-line dossier").option("--fix <summary>", "how to fix it").option("--pattern <regex>", "regex signature to re-catch this class").option("--flags <flags>", "regex flags for --pattern").option("--rule <name>", "named structural-rule signature").option("--lang <langs>", "comma-separated languages the signature applies to").option("--file <path>", "file where it was caught (records an encounter)").option("--line <n>", "line number for the encounter").option("--cwe <id>", "CWE id, e.g. CWE-89").option("--tags <tags>", "comma-separated tags").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (opts) => {
+).option("--common <name>", 'plain-English name, e.g. "Unguarded null dereference"').option("--from-scan [json]", "persist scan candidate JSON (reads stdin if no value given)").option("--name <codename>", "memorable codename (auto-generated if omitted)").option("--severity <1-5>", "severity 1\u20135 (default 3)").option("--description <text>", "one-line dossier").option("--fix <summary>", "how to fix it").option("--pattern <regex>", "regex signature to re-catch this class").option("--flags <flags>", "regex flags for --pattern").option("--rule <name>", "named structural-rule signature").option("--lang <langs>", "comma-separated languages the signature applies to").option("--file <path>", "file where it was caught (records an encounter)").option("--line <n>", "line number for the encounter").option("--cwe <id>", "CWE id, e.g. CWE-89").option("--tags <tags>", "comma-separated tags").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (opts) => {
   await runCatch(opts);
 });
 program2.command("seal").argument("<id>", "species id to seal").description("Seal a species with a permanent guard (the apex move).").option("--kind <kind>", "guard kind: test|lint-rule|type|assertion (default test)").option("--ref <reference>", "reference to the guard, e.g. tests/null_guard.test.ts").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (id, opts) => {
@@ -9513,8 +9751,8 @@ program2.command("stats").description("Show the trainer card (rank, XP, stats, s
 program2.command("card").description("Show a compact trainer card plus any active Nemeses.").option("--hook", "emit SessionStart additionalContext JSON (reads stdin)").option("--flair <level>", "override flair: high | medium | off").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (opts) => {
   await runCard(opts);
 });
-program2.command("scan").description("Deep on-demand hunt for NEW species (full loop lands in M5).").allowUnknownOption(true).allowExcessArguments(true).action(async () => {
-  await runScan();
+program2.command("scan").argument("[paths...]", "files or directories to scan (default: the working-tree diff)").description("Collect context for a deep bug hunt (used by /bugdex:scan).").option("--collect", "emit the scan collection (files/diff + dex summary) as JSON").option("--diff", "scan the git diff even when paths are given").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (paths, opts) => {
+  await runScan(paths, opts);
 });
 program2.command("dashboard").description("Serve the Pok\xE9dex web UI (lands in M6).").allowUnknownOption(true).allowExcessArguments(true).action(async () => {
   await runDashboard();

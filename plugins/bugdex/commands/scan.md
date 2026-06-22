@@ -10,5 +10,3 @@ Run a deep bug hunt.
 3. **De-duplicate** every candidate against existing species — a candidate that already matches an existing signature is an _encounter_, not a new species.
 4. **Present** findings as a numbered list: name · type · severity · file:line · proposed fix.
 5. On my confirmation, **persist** each with `node "${CLAUDE_PLUGIN_ROOT}/bin/bugdex.cjs" catch --from-scan <json>` and report the XP/rank changes.
-
-> The deep `scan --collect` / `catch --from-scan` backing lands in milestone M5; until then this command will report that discovery isn't available yet.

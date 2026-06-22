@@ -8,7 +8,7 @@ import { runMatch, type MatchCliOptions } from "./commands/match.js";
 import { runDex, type DexCliOptions } from "./commands/dex.js";
 import { runStats, type StatsCliOptions } from "./commands/stats.js";
 import { runCard, type CardCliOptions } from "./commands/card.js";
-import { runScan } from "./commands/scan.js";
+import { runScan, type ScanCliOptions } from "./commands/scan.js";
 import { runDashboard } from "./commands/dashboard.js";
 
 const program = new Command();
@@ -42,12 +42,13 @@ program
 
 program
   .command("catch")
-  .description("Manually catalogue a new bug species.")
-  .requiredOption(
+  .description("Manually catalogue a new bug species (or --from-scan to persist candidates).")
+  .option(
     "--type <type>",
     "bug type (null|injection|concurrency|memory|logic|crypto|auth|resource|type|config)",
   )
-  .requiredOption("--common <name>", 'plain-English name, e.g. "Unguarded null dereference"')
+  .option("--common <name>", 'plain-English name, e.g. "Unguarded null dereference"')
+  .option("--from-scan [json]", "persist scan candidate JSON (reads stdin if no value given)")
   .option("--name <codename>", "memorable codename (auto-generated if omitted)")
   .option("--severity <1-5>", "severity 1–5 (default 3)")
   .option("--description <text>", "one-line dossier")
@@ -107,11 +108,13 @@ program
 
 program
   .command("scan")
-  .description("Deep on-demand hunt for NEW species (full loop lands in M5).")
-  .allowUnknownOption(true)
-  .allowExcessArguments(true)
-  .action(async () => {
-    await runScan();
+  .argument("[paths...]", "files or directories to scan (default: the working-tree diff)")
+  .description("Collect context for a deep bug hunt (used by /bugdex:scan).")
+  .option("--collect", "emit the scan collection (files/diff + dex summary) as JSON")
+  .option("--diff", "scan the git diff even when paths are given")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (paths: string[], opts: ScanCliOptions) => {
+    await runScan(paths, opts);
   });
 
 program

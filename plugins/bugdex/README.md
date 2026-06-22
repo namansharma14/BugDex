@@ -35,14 +35,14 @@ Both honour `flair: "off"` in `.bugdex/config.json` if you want silence.
 
 **Slash commands** (namespaced `/bugdex:*`):
 
-| Command             | What it does                                                                              |
-| ------------------- | ----------------------------------------------------------------------------------------- |
-| `/bugdex:scan`      | Deep hunt for NEW species via the read-only `bug-hunter` subagent _(backing lands in M5)_ |
-| `/bugdex:dex`       | List the catalogued species                                                               |
-| `/bugdex:catch`     | Manually catalogue a bug you just fixed                                                   |
-| `/bugdex:seal`      | Seal a recurring Nemesis with a permanent guard (apex move)                               |
-| `/bugdex:card`      | Show your trainer card + active Nemeses                                                   |
-| `/bugdex:dashboard` | Open the Pokédex web UI _(lands in M6)_                                                   |
+| Command             | What it does                                                      |
+| ------------------- | ----------------------------------------------------------------- |
+| `/bugdex:scan`      | Deep hunt for NEW species via the read-only `bug-hunter` subagent |
+| `/bugdex:dex`       | List the catalogued species                                       |
+| `/bugdex:catch`     | Manually catalogue a bug you just fixed                           |
+| `/bugdex:seal`      | Seal a recurring Nemesis with a permanent guard (apex move)       |
+| `/bugdex:card`      | Show your trainer card + active Nemeses                           |
+| `/bugdex:dashboard` | Open the Pokédex web UI _(lands in M6)_                           |
 
 **Subagent:** `bug-hunter` — read-only (`Read`, `Grep`, `Glob`); it reports
 candidates as JSON and never edits code. All persistence goes through the CLI,
