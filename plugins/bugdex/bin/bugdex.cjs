@@ -9884,6 +9884,86 @@ async function runDashboard(opts) {
   await server.close();
 }
 
+// src/commands/verify-seals.ts
+var import_node_path9 = require("path");
+function refToPath(reference) {
+  const base = reference.split("::")[0].split("#")[0].replace(/:\d+$/, "").trim();
+  if (base.length === 0) return null;
+  return /[/\\]/.test(base) || /\.[A-Za-z0-9]+$/.test(base) ? base : null;
+}
+async function verifySeals(opts) {
+  const paths = resolvePaths(opts.root);
+  const { dex } = await loadDex(paths.dex);
+  const config = await loadConfig(paths.config);
+  const intact = [];
+  const unverifiable = [];
+  const broken = [];
+  const species = [...dex.species];
+  let changed = false;
+  for (let i = 0; i < species.length; i++) {
+    const s = species[i];
+    if (s.status !== "sealed" || !s.seal) continue;
+    const reference = s.seal.reference;
+    const relPath = refToPath(reference);
+    if (relPath === null) {
+      unverifiable.push({ id: s.id, reference });
+      continue;
+    }
+    if (await pathExists((0, import_node_path9.join)(opts.root, relPath))) {
+      intact.push({ id: s.id, reference });
+      continue;
+    }
+    const revertedTo = computeStatus({
+      encounters: s.encounters.length,
+      sealed: false,
+      nemesisThreshold: config.nemesisThreshold
+    });
+    species[i] = { ...s, seal: void 0, status: revertedTo };
+    broken.push({ id: s.id, name: s.name, reference, revertedTo });
+    changed = true;
+  }
+  if (changed) {
+    const newDex = { version: dex.version, species };
+    await saveDex(paths.dex, newDex);
+    const trainer = await loadTrainer(paths.trainer);
+    const stats = computeStats(newDex);
+    const rank = deriveRank({
+      xp: trainer.xp,
+      seals: stats.sealed,
+      regionalDexComplete: regionalDexComplete(newDex)
+    });
+    await saveTrainer(paths.trainer, { ...trainer, stats, rank: rank.title, title: rank.flavor });
+  }
+  return {
+    checked: intact.length + unverifiable.length + broken.length,
+    intact,
+    unverifiable,
+    broken
+  };
+}
+async function runVerifySeals(opts) {
+  const result = await verifySeals({ root: opts.dir ?? process.cwd() });
+  const out = process.stdout;
+  if (result.checked === 0) {
+    out.write("No sealed species to verify.\n");
+    return;
+  }
+  out.write(
+    `Verified ${String(result.checked)} seal(s): ${String(result.intact.length)} intact, ${String(result.broken.length)} broken, ${String(result.unverifiable.length)} unverifiable.
+`
+  );
+  for (const b of result.broken) {
+    out.write(
+      `  \u26A0 ${b.name}: guard "${b.reference}" is gone \u2192 reverted to ${b.revertedTo}. Re-seal it.
+`
+    );
+  }
+  for (const u of result.unverifiable) {
+    out.write(`  ? ${u.id}: "${u.reference}" can't be auto-verified.
+`);
+  }
+}
+
 // src/cli.ts
 var program2 = new Command();
 program2.name("bugdex").description("A Pok\xE9dex for your codebase \u2014 catalogue, recognise, and gamify bug fixing.").version(VERSION, "-v, --version", "print the BugDex version");
@@ -9916,6 +9996,9 @@ program2.command("scan").argument("[paths...]", "files or directories to scan (d
 });
 program2.command("dashboard").description("Serve the Pok\xE9dex web dashboard.").option("--port <port>", "port to listen on (default 4317)").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (opts) => {
   await runDashboard(opts);
+});
+program2.command("verify-seals").description("Re-check sealed guards still exist; revert toward nemesis if any vanished.").option("-C, --dir <path>", "repo root (defaults to the current directory)").action(async (opts) => {
+  await runVerifySeals(opts);
 });
 async function main() {
   await program2.parseAsync(process.argv);

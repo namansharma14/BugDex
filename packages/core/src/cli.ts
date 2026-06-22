@@ -10,6 +10,7 @@ import { runStats, type StatsCliOptions } from "./commands/stats.js";
 import { runCard, type CardCliOptions } from "./commands/card.js";
 import { runScan, type ScanCliOptions } from "./commands/scan.js";
 import { runDashboard, type DashboardCliOptions } from "./commands/dashboard.js";
+import { runVerifySeals, type VerifySealsCliOptions } from "./commands/verify-seals.js";
 
 const program = new Command();
 
@@ -124,6 +125,14 @@ program
   .option("-C, --dir <path>", "repo root (defaults to the current directory)")
   .action(async (opts: DashboardCliOptions) => {
     await runDashboard(opts);
+  });
+
+program
+  .command("verify-seals")
+  .description("Re-check sealed guards still exist; revert toward nemesis if any vanished.")
+  .option("-C, --dir <path>", "repo root (defaults to the current directory)")
+  .action(async (opts: VerifySealsCliOptions) => {
+    await runVerifySeals(opts);
   });
 
 async function main(): Promise<void> {
