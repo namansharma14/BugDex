@@ -1,0 +1,48 @@
+{
+  "name": "bugdex",
+  "version": "0.1.0",
+  "description": "A Pokédex for your codebase: catalogue every bug you fix, recognise recurrences instantly with the saved fix, and gamify the hunt.",
+  "license": "MIT",
+  "author": {
+    "name": "Naman Sharma",
+    "email": "naman.work13@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/namansharma14/bugdex.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "bugs",
+    "vulnerabilities",
+    "security",
+    "code-review",
+    "gamification",
+    "claude-code"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "bugdex": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  }
+}

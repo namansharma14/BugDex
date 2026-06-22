@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Test / coverage
+coverage/
+
+# Editor / OS
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# BugDex: per-user trainer progress is personal by default.
+# (`bugdex init` also writes this rule into a target repo's .gitignore.)
+.bugdex/trainer.local.json

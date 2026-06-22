@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+package-lock.json
+plugins/**/bin/
+*.cjs
+
+# Authoritative spec — kept verbatim, not reflowed.
+SPEC.md

@@ -1,0 +1,42 @@
+{
+  "name": "bugdex-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "BugDex — gamified bug & vulnerability memory for Claude Code.",
+  "license": "MIT",
+  "author": {
+    "name": "Naman Sharma",
+    "email": "naman.work13@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/namansharma14/bugdex.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^3.0.0"
+  }
+}
