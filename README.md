@@ -12,6 +12,15 @@
 
 <p align="center"><img src="docs/sprites.svg" alt="Every bug class becomes a catalogued species" width="720"></p>
 
+<!--
+  📹 DEMO GIF — the single highest-ROI README asset. Record ~15–20s of:
+       bugdex catch …  →  bugdex match src/  →  bugdex seal …    (in the terminal)
+     plus a ~3s clip of `bugdex dashboard`. Save it to docs/demo.gif, then
+     uncomment the line below (and delete this comment).
+
+  <p align="center"><img src="docs/demo.gif" alt="BugDex in action: catch, match, seal" width="720"></p>
+-->
+
 BugDex is a **bug _memory_, not a bug scanner.** Every bug you catch and fix becomes
 a catalogued "species" with its fix attached. The next time that _class_ of bug
 reappears — written by anyone, anywhere in the repo — BugDex recognises it instantly
