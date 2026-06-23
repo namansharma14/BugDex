@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # create the GitHub Release
+  id-token: write # npm provenance attestation
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish bugdex to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Verify tag matches package version
+        run: |
+          pkg="$(node -p "require('./packages/core/package.json').version")"
+          tag="${GITHUB_REF_NAME#v}"
+          echo "package.json=$pkg  tag=$tag"
+          if [ "$pkg" != "$tag" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package version $pkg"
+            exit 1
+          fi
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint · typecheck · test
+        run: |
+          npm run lint
+          npm run typecheck
+          npm test
+
+      - name: Build (dashboard → embed → core + plugin bundle)
+        run: npm run build
+
+      - name: Check whether this version is already on npm
+        id: published
+        run: |
+          ver="$(node -p "require('./packages/core/package.json').version")"
+          if npm view "bugdex@${ver}" version > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "bugdex@${ver} is already on npm — skipping publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm (with provenance)
+        if: steps.published.outputs.exists == 'false'
+        run: npm publish -w bugdex --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
