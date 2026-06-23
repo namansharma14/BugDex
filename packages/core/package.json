@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/namansharma14/bugdex.git",
+    "url": "git+https://github.com/namansharma14/bugdex.git",
     "directory": "packages/core"
   },
   "homepage": "https://github.com/namansharma14/bugdex#readme",
@@ -39,7 +39,7 @@
     }
   },
   "bin": {
-    "bugdex": "./dist/cli.js"
+    "bugdex": "dist/cli.js"
   },
   "files": [
     "dist"
