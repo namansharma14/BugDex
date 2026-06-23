@@ -1,0 +1,39 @@
+name: 🐛 Bug report
+description: Something in BugDex isn't working as expected.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. bugdex init
+        2. bugdex catch ...
+        3. bugdex match src/
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: How are you running it?
+      options:
+        - CLI (npm)
+        - Claude Code plugin
+        - Dashboard
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS + Node version (`node -v`) + BugDex version.
+    validations:
+      required: false

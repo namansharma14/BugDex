@@ -1,5 +1,13 @@
 # BugDex 🐛📕
 
+<p align="center">
+  <a href="https://github.com/namansharma14/bugdex/actions/workflows/ci.yml"><img src="https://github.com/namansharma14/bugdex/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
+  <a href="https://www.npmjs.com/package/bugdex"><img src="https://img.shields.io/npm/v/bugdex?logo=npm&color=cb3837&label=bugdex" alt="npm version"></a>
+  <img src="https://img.shields.io/badge/node-%E2%89%A5%2022-3c873a?logo=node.js&logoColor=white" alt="Node 22+">
+  <img src="https://img.shields.io/badge/Claude%20Code-plugin-d97757" alt="Claude Code plugin">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+</p>
+
 > A Pokédex for your codebase. Catalogue every bug you fix, recognise recurrences instantly with the saved fix, and gamify the hunt — offline-first, private, and low-noise.
 
 <p align="center"><img src="docs/sprites.svg" alt="Every bug class becomes a catalogued species" width="720"></p>

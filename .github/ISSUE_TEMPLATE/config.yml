@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 Docs & getting started
+    url: https://github.com/namansharma14/bugdex#readme
+    about: Setup, commands, and how BugDex works.
