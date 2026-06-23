@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { catchSpecies } from "../src/commands/catch.js";
@@ -127,7 +127,12 @@ describe("matchAndRecord", () => {
 describe("read-only commands", () => {
   it("runDex and runStats run without throwing", async () => {
     await catchSpecies({ root: repo, type: "null", commonName: "Nullish", now });
-    await expect(runDex({ dir: repo })).resolves.toBeUndefined();
-    await expect(runStats({ dir: repo })).resolves.toBeUndefined();
+    const quiet = vi.spyOn(process.stdout, "write").mockReturnValue(true);
+    try {
+      await expect(runDex({ dir: repo })).resolves.toBeUndefined();
+      await expect(runStats({ dir: repo })).resolves.toBeUndefined();
+    } finally {
+      quiet.mockRestore();
+    }
   });
 });

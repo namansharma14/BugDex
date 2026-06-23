@@ -2,6 +2,8 @@
 
 > A Pokédex for your codebase. Catalogue every bug you fix, recognise recurrences instantly with the saved fix, and gamify the hunt — offline-first, private, and low-noise.
 
+<p align="center"><img src="docs/sprites.svg" alt="Every bug class becomes a catalogued species" width="720"></p>
+
 BugDex is a **bug _memory_, not a bug scanner.** Every bug you catch and fix becomes
 a catalogued "species" with its fix attached. The next time that _class_ of bug
 reappears — written by anyone, anywhere in the repo — BugDex recognises it instantly
@@ -143,19 +145,11 @@ toward Nemesis — keeping the gamification honest.
 `bugdex dashboard [--port 4317]` serves a static React app + a tiny JSON API over
 `.bugdex/` — offline, no `localStorage` (state lives in the dex via the API).
 
-```text
-┌─ BugDex ───────────────────────────────────────────────────────────────┐
-│  Trainer card          │  #047 VOIDLING                │  Dex grid       │
-│  Ace Trainer           │  ▓ sprite ▓  Null · ●●○○ · sev2│ [type][rarity]  │
-│  ▓▓▓▓▓░░ 620/1200       │  🟥 NEMESIS                     │ ▦ ▦ ▦ ▦ ▦ ▦   │
-│  Regional dex 5/10     │  Known fix: guard before deref │ ▦ ▦ ? ? ? ?    │
-│  ⚠ Nemesis board       │  [ seal: test ▾ ][ ref ][Seal] │                 │
-└────────────────────────────────────────────────────────────────────────┘
-```
+![BugDex dashboard](docs/dashboard.png)
 
-Red Pokédex chrome, a generated sprite per species, type badges in the taxonomy colors,
-rarity dots, a red **NEMESIS** pill, a regional-completion meter, and one-click sealing.
-_(Run it locally to see it in colour — screenshots/GIF coming soon.)_
+Red Pokédex chrome, a generated creature sprite per species, type badges in the taxonomy
+colors, rarity dots, a red **NEMESIS** pill, a regional-completion meter, and one-click
+sealing.
 
 ---
 
